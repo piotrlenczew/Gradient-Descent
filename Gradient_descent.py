@@ -2,27 +2,37 @@ import numpy as np
 from autograd import grad
 
 
-def g(x):
-    return x[0] ** 2 + 2 * x[1] ** 2
+def g(x, alpha):
+    result = 0
+
+    for i, xi in enumerate(x):
+        result += pow(alpha, (i-1)/9)*(xi**2)
+    return result
 
 
-def solver(f, x0, alpha, tolerance=1e-6, max_iter=100):
-    x0 = np.array(x0)
-    x1 = x0
-    iteration = 0
+def h(x):
+    return (x+2) ** 2 + 2
+
+
+def solver(f, x0, alpha, tolerance=1e-6, max_iter=10):
+    result = [x0]
+    current_x = x0
 
     gradient_f = grad(f)
 
-    while iteration < max_iter:
-        gradient = gradient_f(x0)
-        if np.linalg.norm(gradient) <= tolerance:
+    for i in range(max_iter-1):
+        gradient = gradient_f(current_x)
+        if gradient <= tolerance:
             break
-        x1 = x0 - alpha * gradient
-        if np.linalg.norm(x1-x0) <= tolerance:
+        next_x = current_x - alpha * gradient
+        if np.abs(next_x-current_x) <= tolerance:
             break
-        x0 = x1
-        iteration += 1
-    return x1
+        result.append(next_x)
+        current_x = next_x
+    print(len(result))
+    return result
 
 
-print(solver(g, [3.0, 4.0], 1))
+path = solver(h, 3.0, 0.5)
+print(path)
+print(g(path, 0.5))
