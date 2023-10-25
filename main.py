@@ -1,7 +1,8 @@
 import functools
 import numpy as np
 import time
-from Gradient_descent import gradient_descent, GradParam, GradResults
+import pandas as pd
+from Gradient_descent import gradient_descent, GradParam
 from Plotting import plot_convergence
 
 
@@ -12,45 +13,43 @@ def g(x: np.array, alpha: int):
     return result
 
 
-functions = []
+learning_rates = [0.1, 0.01, 0.001]
+alphas = [1, 10, 100]
+starting_point = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0]
 
-functions.append(functools.partial(g, alpha=1))
-functions.append(functools.partial(g, alpha=10))
-functions.append(functools.partial(g, alpha=100))
+functions = [functools.partial(g, alpha=alpha) for alpha in alphas]
 
+for learning_rate in learning_rates:
+    results_for_table = []
+    results_for_graph = []
 
-start = time.time()
-grad_result_alpha_1 = gradient_descent(
-    g_alpha_1,
-    [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0],
-    GradParam(),
-)
-end = time.time()
-time_for_alpha_1 = end - start
+    for index, function in enumerate(functions):
+        start = time.time()
+        grad_result = gradient_descent(
+            function,
+            starting_point,
+            GradParam(learning_rate),
+        )
+        end = time.time()
+        elapsed_time = end - start
 
-start = time.time()
-grad_result_alpha_10 = gradient_descent(
-    g_alpha_10,
-    [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0],
-    GradParam(),
-)
-end = time.time()
-time_for_alpha_10 = end - start
+        results_for_table.append(
+            {
+                "Alpha": alphas[index],
+                "Reason for stop": grad_result.reason_for_stop,
+                "Time (s)": elapsed_time,
+            }
+        )
 
-start = time.time()
-grad_result_alpha_100 = gradient_descent(
-    g_alpha_100,
-    [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0],
-    GradParam(),
-)
-end = time.time()
-time_for_alpha_100 = end - start
+        results_for_graph.append(grad_result)
 
-print(f'Alpha=1\nReason for stop: {grad_result_alpha_1.reason_for_stop}\nTime in seconds: {time_for_alpha_1:.4f}\n')
-print(f'Alpha=10\nReason for stop: {grad_result_alpha_10.reason_for_stop}\nTime in seconds: {time_for_alpha_10:.4f}\n')
-print(f'Alpha=100\nReason for stop: {grad_result_alpha_100.reason_for_stop}\nTime in seconds: {time_for_alpha_100:.4f}\n')
+    print(f"Table for learning rate = {learning_rate}")
+    table = pd.DataFrame(results_for_table)
+    print(f"{table}\n")
 
-plot_convergence(
-    [grad_result_alpha_1, grad_result_alpha_10, grad_result_alpha_100],
-    ["alpha_1", "alpha_10", "alpha_100"],
-)
+    labels = [f"alpha_{alpha}" for alpha in alphas]
+    plot_convergence(
+        results_for_graph,
+        labels,
+        f"Convergence of Gradient Descent for learning rate = {learning_rate}",
+    )
